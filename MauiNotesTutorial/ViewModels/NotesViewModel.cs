@@ -22,7 +22,7 @@ public class NotesViewModel : IQueryAttributable
         await Shell.Current.GoToAsync(nameof(Views.NotePage));
     }
 
-    private async Task SelectNoteAsync(NoteViewModel note)
+    private async Task SelectNoteAsync(NoteViewModel? note)
     {
         if (note != null)
             await Shell.Current.GoToAsync($"{nameof(Views.NotePage)}?load={note.Identifier}");
@@ -30,19 +30,27 @@ public class NotesViewModel : IQueryAttributable
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        if (query.ContainsKey("deleted"))
+        bool TryGetQueryValueAsStringOrEmpty(string key, out string value)
         {
-            string noteId = query["deleted"].ToString();
-            NoteViewModel matchedNote = AllNotes.Where((n) => n.Identifier == noteId).FirstOrDefault();
-
+            value = "";
+            if (!query.TryGetValue(key, out object? objectValue))
+                return false;
+            if (objectValue.ToString() is string noteId)
+            {
+                value = noteId;
+                return true;
+            }
+            return false;
+        }
+        if (TryGetQueryValueAsStringOrEmpty("deleted", out string noteId))
+        {
+            NoteViewModel? matchedNote = FirstOrDefaultNote(noteId);
             if (matchedNote != null)
                 AllNotes.Remove(matchedNote);
         }
-        else if (query.ContainsKey("saved"))
+        else if (TryGetQueryValueAsStringOrEmpty("saved", out noteId))
         {
-            string noteId = query["saved"].ToString();
-            NoteViewModel matchedNote = AllNotes.Where((n) => n.Identifier == noteId).FirstOrDefault();
-
+            NoteViewModel? matchedNote = FirstOrDefaultNote(noteId);
             if (matchedNote != null)
             {
                 matchedNote.Reload();
@@ -53,4 +61,7 @@ public class NotesViewModel : IQueryAttributable
                 AllNotes.Insert(0, new NoteViewModel(Models.Note.Load(noteId)));
         }
     }
+
+    private NoteViewModel? FirstOrDefaultNote(string noteId)
+        => AllNotes.FirstOrDefault((n) => n.Identifier == noteId);
 }

@@ -66,9 +66,11 @@ public class NoteViewModel : ObservableObject, IQueryAttributable
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        if (query.ContainsKey("load"))
+        if (!query.TryGetValue("load", out object? value))
+            return;
+        if (value.ToString() is string noteId)
         {
-            _note = Models.Note.Load(query["load"].ToString());
+            _note = Models.Note.Load(noteId);
             // Since _note is being set not Text or Date
             RefreshProperties();
         }
