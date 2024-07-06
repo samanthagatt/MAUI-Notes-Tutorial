@@ -44,9 +44,13 @@ public class NotesViewModel : IQueryAttributable
             NoteViewModel matchedNote = AllNotes.Where((n) => n.Identifier == noteId).FirstOrDefault();
 
             if (matchedNote != null)
+            {
                 matchedNote.Reload();
+                // Move it to the top since it was just updated
+                AllNotes.Move(AllNotes.IndexOf(matchedNote), 0);
+            }
             else
-                AllNotes.Add(new NoteViewModel(Models.Note.Load(noteId)));
+                AllNotes.Insert(0, new NoteViewModel(Models.Note.Load(noteId)));
         }
     }
 }
